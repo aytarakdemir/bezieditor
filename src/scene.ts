@@ -76,6 +76,13 @@ export class Scene {
             return;
         }
         for (let i = 0; i < this.bezierCoordinates.length; i++) {
+            this.ctx.fillStyle = "black";
+            this.ctx.beginPath();
+
+            this.ctx.rect(this.pivotX, this.pivotY, 10, 10);
+            this.ctx.fill();
+            this.ctx.stroke();
+            
 
             if (this.bezierCoordinates[i].length === 6) {
 
@@ -173,12 +180,24 @@ export class Scene {
             this.dragStart.x = event.clientX - this.bezierCoordinates[this.selected.curve][this.selected.coordinateX];
             this.dragStart.y = event.clientY - this.bezierCoordinates[this.selected.curve][this.selected.coordinateY];
         }
+        else if (this.isPivotSelected(event)) {
+            this.isDragging = true;
+            this.dragStart.x = event.clientX - this.pivotX;
+            this.dragStart.y = event.clientY - this.pivotY;
+
+        }
     }
 
     private onMouseMove(event: MouseEvent) {
-        if (this.isDragging && this.selected) {
+        if (!this.isDragging) return;
+        if (this.selected) {
             this.bezierCoordinates[this.selected.curve][this.selected.coordinateX] = event.clientX - this.dragStart.x;
             this.bezierCoordinates[this.selected.curve][this.selected.coordinateY] = event.clientY - this.dragStart.y;
+            this.draw();
+        }
+        else if (this.isPivotSelected(event)) {
+            this.pivotX = event.clientX - this.dragStart.x;
+            this.pivotY = event.clientY - this.dragStart.y;
             this.draw();
         }
     }
@@ -186,6 +205,13 @@ export class Scene {
     private onMouseUp() {
         this.selected = null;
         this.isDragging = false;
+    }
+
+    private isPivotSelected(event: MouseEvent): boolean {
+        return event.clientX >= this.pivotX - 50 &&
+            event.clientX <= this.pivotX + 50 &&
+            event.clientY >= this.pivotY - 50 &&
+            event.clientY <= this.pivotY + 50;
     }
 
     private selectedRect(event: MouseEvent): {curve: number, coordinateX: number, coordinateY: number} | null {
