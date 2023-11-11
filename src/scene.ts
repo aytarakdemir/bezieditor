@@ -17,6 +17,14 @@ export class Scene {
 
     private isEditing: boolean = true;
 
+    private startX: number = 0;
+    private startY: number = 0;
+
+    private isSelectBoxActive: boolean = false;
+    private selectBoxCoords: { x: number, y: number, width: number, height: number } | null = null;
+
+    private isDraggingANode= false;
+
     constructor() {
         this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
         this.resizeCanvas();
@@ -120,6 +128,16 @@ export class Scene {
         this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
         this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
     }
+
+    private drawSelectBox(x: number, y: number, width: number, height: number) {
+        console.log(x, y, width, height);
+        this.ctx.beginPath();
+        this.ctx.rect(x, y, width, height);
+        this.ctx.strokeStyle = 'blue';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+    }
+
     private initControlMenuEvents() {
         const checkBox = document.getElementById('edit-state') as HTMLInputElement;
         const button = document.getElementById('btn-input') as HTMLButtonElement;
@@ -171,17 +189,20 @@ export class Scene {
     }
 
     private onMouseDown(event: MouseEvent) {
+        this.startX = event.offsetX;
+        this.startY = event.offsetY;
         if (!this.isEditing) {
             return;
         }
+        this.isDragging = true;
         this.selected = this.selectedRect(event);
         if (this.selected) {
-            this.isDragging = true;
+            this.isDraggingANode = true;
             this.dragStart.x = event.clientX - this.bezierCoordinates[this.selected.curve][this.selected.coordinateX];
             this.dragStart.y = event.clientY - this.bezierCoordinates[this.selected.curve][this.selected.coordinateY];
         }
         else if (this.isPivotSelected(event)) {
-            this.isDragging = true;
+            this.isDraggingANode = true;
             this.dragStart.x = event.clientX - this.pivotX;
             this.dragStart.y = event.clientY - this.pivotY;
 
@@ -189,7 +210,8 @@ export class Scene {
     }
 
     private onMouseMove(event: MouseEvent) {
-        if (!this.isDragging) return;
+        if (!this.isDraggingANode && !this.isDragging) return;
+
         if (this.selected) {
             this.bezierCoordinates[this.selected.curve][this.selected.coordinateX] = event.clientX - this.dragStart.x;
             this.bezierCoordinates[this.selected.curve][this.selected.coordinateY] = event.clientY - this.dragStart.y;
@@ -200,11 +222,25 @@ export class Scene {
             this.pivotY = event.clientY - this.dragStart.y;
             this.draw();
         }
+
+        if (this.isDragging) {
+            this.isSelectBoxActive = true;
+            this.selectBoxCoords = {
+                x: this.startX,
+                y: this.startY,
+                width: event.offsetX - this.startX,
+                height: event.offsetY - this.startY
+            };
+        } else {
+            this.isSelectBoxActive = false;
+        }
     }
 
     private onMouseUp() {
         this.selected = null;
         this.isDragging = false;
+        this.isDraggingANode = false;
+        this.isSelectBoxActive = false;
     }
 
     private isPivotSelected(event: MouseEvent): boolean {
@@ -250,10 +286,13 @@ export class Scene {
     }
     
     private animate():void {
-        requestAnimationFrame(this.animate.bind(this));
         this.ctx.clearRect(0, 0, innerWidth, innerHeight);
         this.draw();
         this.drawHandles();
+        if (this.isSelectBoxActive && this.selectBoxCoords && !this.isDraggingANode) {
+            this.drawSelectBox(this.selectBoxCoords.x, this.selectBoxCoords.y, this.selectBoxCoords.width, this.selectBoxCoords.height);
+        }
+        requestAnimationFrame(this.animate.bind(this));
     }
 
 
