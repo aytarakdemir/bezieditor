@@ -15,6 +15,8 @@ export class Scene {
     private dragStart = { x: 0, y: 0 };
     private selected: {curve: number, coordinateX: number, coordinateY: number} | null = null;
 
+    private isEditing: boolean = true;
+
     constructor() {
         this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
         this.resizeCanvas();
@@ -22,6 +24,7 @@ export class Scene {
         this.ctx = (this.canvas as HTMLCanvasElement).getContext('2d')!;
         this.animate();
         this.initMouseEvents();
+        this.initControlMenuEvents();
     }
 
     private resizeCanvas= (): void => {
@@ -69,6 +72,9 @@ export class Scene {
     }
 
     private drawHandles() {
+        if (!this.isEditing) {
+            return;
+        }
         for (let i = 0; i < this.bezierCoordinates.length; i++) {
 
             if (this.bezierCoordinates[i].length === 6) {
@@ -107,8 +113,60 @@ export class Scene {
         this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
         this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
     }
+    private initControlMenuEvents() {
+        const checkBox = document.getElementById('edit-state') as HTMLInputElement;
+        const button = document.getElementById('btn-input') as HTMLButtonElement;
+        const textarea = document.getElementById('bezier-input') as HTMLTextAreaElement;
+        const outputButton = document.getElementById('btn-output') as HTMLButtonElement;
+        const outputParagraph = document.getElementById('output') as HTMLParagraphElement;
+        
+        checkBox.checked = this.isEditing;
+        checkBox.addEventListener('change', () => {
+            if (checkBox.checked) {
+                this.isEditing = true;
+            } else {
+                this.isEditing = false;
+            }
+        });
+        button.addEventListener('click', () => {
+            try {
+                const inputValue = JSON.parse(textarea.value) as number[][];
+                if (this.isValidNumberArrayArray(inputValue)) {
+                    this.processInput(inputValue);
+                } else {
+                    alert('Invalid input format. Expected an array of arrays of numbers.');
+                    console.error('Invalid input format. Expected an array of arrays of numbers.');
+                }
+            } catch (error) {
+                console.error('Invalid JSON format:', error);
+            }
+        });
+        outputButton.addEventListener('click', () => {
+            const formattedArrayString = '[' + this.bezierCoordinates.map(subArray => 
+                '\n[' + subArray.join(', ') + ']'
+            ).join(',') + '\n]';            
+            outputParagraph.textContent = formattedArrayString;
+        });
+    }
+
+    private processInput(inputValue: number[][]) {
+        console.log('Validated input:', inputValue);
+
+        this.bezierCoordinates=inputValue;
+    }
+
+    private isValidNumberArrayArray(input: any): input is number[][] {
+        return Array.isArray(input) &&
+            input.every(subArray =>
+                Array.isArray(subArray) &&
+                subArray.every(item => typeof item === 'number')
+            );
+    }
 
     private onMouseDown(event: MouseEvent) {
+        if (!this.isEditing) {
+            return;
+        }
         this.selected = this.selectedRect(event);
         if (this.selected) {
             this.isDragging = true;

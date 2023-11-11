@@ -9,11 +9,89 @@ body {
 p, label, button, h1, h2, h3 {
     margin-block: 0;
     font-family: monospace;
+    display: flex;
+    align-items: center;
 }
 
 .wrapper { 
     display: flex;
     flex-direction: row;
+
+    .panel-base {
+        width: 300px;
+        height: calc(100vh - 100px);
+        position: fixed;
+        top: 30px;
+        padding: 20px;
+        right: 30px;
+        display: flex;
+        flex-direction: column;
+        background-color: #eee;
+        border: #999 1px solid;
+
+        .panel-title {
+            padding: 20px;
+        }
+
+        .button-panel {
+            width: calc(100% - 40px);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+
+            .checkbox-wrapper {
+                display: flex;
+                justify-content: flex-start;
+                gap: 10px;
+
+            }
+
+            .textarea-wrapper {
+                textarea {
+                    width: 100%;
+                    resize: vertical;
+                    min-height: 100px;
+                    max-height: 500px;
+                }
+            }
+
+            .pre-wrapper {
+                background-color: white;
+                border: 1px solid #9f9f9f;
+                overflow-x: auto;
+                max-width: 100%;
+                min-height: 100px;
+            }
+
+            #output {
+                width: 100%;
+            }
+
+            .button-wrapper {
+                display: flex;
+                height: 30px;
+                justify-content: space-evenly;
+                gap: 10px;
+            }
+            .button-wrapper button {
+                width: 100%;
+                flex: 1;
+                cursor: pointer;
+                border-radius: 0;
+                border: none;
+                background-color: #555;
+                color: #fff;
+                box-shadow: #999 0px 0px 5px 0px;
+
+                &:hover {
+                    background-color: #333;
+
+                }
+            }
+        }
+    }
 }
 
 
